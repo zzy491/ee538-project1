@@ -26,24 +26,89 @@ std::vector<std::vector<int>> edge_list;
 
 void build_adj_matrix()
 {
-    
+    // Create total_nodes x total_nodes matrix initialized to 0
+    adj.assign(total_nodes, vector<int>(total_nodes, 0));
+
+    // Fill matrix using edge_list
+    // Edge: source -> target  → adj[target][source] = 1
+    for (int i = 0; i < edge_list.size(); i++)
+    {
+        int source = edge_list[i][0];
+        int target = edge_list[i][1];
+
+        if (source < total_nodes && target < total_nodes)
+        {
+            adj[target][source] = 1;
+        }
+    }
+
+    // Make sure opinions vector size matches total_nodes
+    if (opinions.size() < total_nodes)
+    {
+        opinions.resize(total_nodes, 0);
+    }
 }
 
 double calculate_fraction_of_ones()
 {
-   
+    if (total_nodes == 0) return 0.0;
+
+    int count = 0;
+
+    for (int i = 0; i < total_nodes; i++)
+    {
+        if (opinions[i] == 1)
+            count++;
+    }
+
+    return (double)count / total_nodes;
 }
 
 // For a given node, count majority opinion among its neighbours. Tie -> 0.
 int get_majority_friend_opinions(int node)
 {
+    int ones = 0;
+    int total_neighbors = 0;
 
+    for (int i = 0; i < total_nodes; i++)
+    {
+        if (adj[node][i] == 1)
+        {
+            total_neighbors++;
+
+            if (opinions[i] == 1)
+                ones++;
+        }
+    }
+
+    int zeros = total_neighbors - ones;
+
+    if (ones > zeros)
+        return 1;
+    else
+        return 0;   // tie or majority 0
 }
 
 // Calculate new opinions for all voters and return if anyone's opinion changed
 bool update_opinions()
 {
+    vector<int> new_opinions = opinions;
+    bool changed = false;
 
+    for (int i = 0; i < total_nodes; i++)
+    {
+        int majority = get_majority_friend_opinions(i);
+
+        if (majority != opinions[i])
+        {
+            new_opinions[i] = majority;
+            changed = true;
+        }
+    }
+
+    opinions = new_opinions;
+
+    return changed;
 }
 
 int main() {
@@ -53,26 +118,34 @@ int main() {
     read_opinions("opinions.txt"); 
     read_edges("edge_list.txt");
 
-    // convert edge list into adjacency matrix once we know total_nodes
     build_adj_matrix();
     
     cout << "Total nodes: " << total_nodes << endl;
     
-    // Run simulation
     int max_iterations = 30;
     int iteration = 0;
     bool opinions_changed = true;
     
-    // Print initial state
     cout << "Iteration " << iteration << ": fraction of 1's = " 
          << calculate_fraction_of_ones() << endl;
     
     /// (6)  //////////////////////////////////////////////
     
+    while (iteration < max_iterations && opinions_changed)
+    {
+        iteration++;
+        opinions_changed = update_opinions();
 
+        cout << "Iteration " << iteration
+             << ": fraction of 1's = "
+             << calculate_fraction_of_ones()
+             << endl;
+    }
+    
     ////////////////////////////////////////////////////////
-    // Print final result
+    
     double final_fraction = calculate_fraction_of_ones();
+
     cout << "Iteration " << iteration << ": fraction of 1's = " 
          << final_fraction << endl;
     
@@ -116,5 +189,6 @@ void read_edges(string filename)
     }
     file.close();
 }
+
 
 /********************************************************************** */
