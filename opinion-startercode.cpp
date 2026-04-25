@@ -26,11 +26,10 @@ std::vector<std::vector<int>> edge_list;
 
 void build_adj_matrix()
 {
-    // Create total_nodes x total_nodes matrix initialized to 0
-    adj.assign(total_nodes, vector<int>(total_nodes, 0));
+    // adjacency list
+    adj.assign(total_nodes, vector<int>());
 
-    // Fill matrix using edge_list
-    // Edge: source -> target  → adj[target][source] = 1
+    // 
     for (int i = 0; i < edge_list.size(); i++)
     {
         int source = edge_list[i][0];
@@ -38,11 +37,11 @@ void build_adj_matrix()
 
         if (source < total_nodes && target < total_nodes)
         {
-            adj[target][source] = 1;
+            adj[target].push_back(source);
         }
     }
 
-    // Make sure opinions vector size matches total_nodes
+    // opinions
     if (opinions.size() < total_nodes)
     {
         opinions.resize(total_nodes, 0);
@@ -68,17 +67,14 @@ double calculate_fraction_of_ones()
 int get_majority_friend_opinions(int node)
 {
     int ones = 0;
-    int total_neighbors = 0;
+    int total_neighbors = adj[node].size();
 
-    for (int i = 0; i < total_nodes; i++)
+    for (int i = 0; i < adj[node].size(); i++)
     {
-        if (adj[node][i] == 1)
-        {
-            total_neighbors++;
+        int neighbor = adj[node][i];
 
-            if (opinions[i] == 1)
-                ones++;
-        }
+        if (opinions[neighbor] == 1)
+            ones++;
     }
 
     int zeros = total_neighbors - ones;
@@ -86,7 +82,7 @@ int get_majority_friend_opinions(int node)
     if (ones > zeros)
         return 1;
     else
-        return 0;   // tie or majority 0
+        return 0;
 }
 
 // Calculate new opinions for all voters and return if anyone's opinion changed
@@ -107,7 +103,6 @@ bool update_opinions()
     }
 
     opinions = new_opinions;
-
     return changed;
 }
 
